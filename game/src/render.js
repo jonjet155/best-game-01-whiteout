@@ -859,12 +859,17 @@ function drawWhiteout(ctx, world) {
 // --- full screens -----------------------------------------------------------
 
 function drawTitle(ctx, world) {
-  // Flat dark-navy background (John 2026-11-17): the title photo still
-  // showed mountains behind the wordmark and the logo did not blend —
-  // so no title image, no gradient, just #0A1931 like the approved
-  // text-only sample. The wordmark + tagline sit directly on it.
+  // Original background photo, restored (John 2026-11-17) — the
+  // triangle peak behind the wordmark stays removed, and the logo is
+  // the transparent sample image so it blends over the photo.
   const a = world.assets;
-  ctx.fillStyle = '#0A1931';
+  if (a && a.title) ctx.drawImage(a.title, 0, 0, W, H);
+  else { ctx.fillStyle = '#0b1c2c'; ctx.fillRect(0, 0, W, H); }
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(7,18,30,0.25)');
+  g.addColorStop(0.55, 'rgba(7,18,30,0.45)');
+  g.addColorStop(1, 'rgba(7,18,30,0.78)');
+  ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
   // Title logo: the approved stacked-Bungee sample image (John
   // 2026-11-17), cropped tight to the wordmark + tagline. Its
