@@ -27,10 +27,10 @@ function rr(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function text(ctx, s, x, y, size, color, align, outline) {
+function text(ctx, s, x, y, size, color, align, outline, baseline) {
   ctx.font = `${size}px ${FONT}`;
   ctx.textAlign = align || 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.textBaseline = baseline || 'alphabetic';
   if (outline) {
     ctx.lineWidth = Math.max(2, size / 6);
     ctx.strokeStyle = outline;
@@ -54,9 +54,18 @@ function tablet(ctx, t, title, titleColor) {
   ctx.fill();
   ctx.fillStyle = 'rgba(7, 18, 30, 0.86)';
   ctx.fillRect(t.x, t.y + 16, t.w, 10);
-  // Title text sits 1 px lower at 14 px so emoji glyphs (⚠/🔨/🏠/🌦) are
-  // not clipped at the top of the 26 px title bar.
-  text(ctx, title, t.x + 10, t.y + 20, 14, '#0b1c2c', 'left');
+  // N1: a leading emoji is drawn on a middle baseline at the bar's centre.
+  // Emoji glyphs come from a fallback font with much taller metrics than
+  // Lilita One, so sharing the label's alphabetic baseline clipped their
+  // tops against the 26 px bar. The label itself stays 15 px / y+19.
+  const m = title.match(/^(\S+)\s+(.*)$/);
+  if (m) {
+    text(ctx, m[1], t.x + 10, t.y + 13, 14, '#0b1c2c', 'left', null, 'middle');
+    const iconW = ctx.measureText(m[1]).width;
+    text(ctx, m[2], t.x + 16 + iconW, t.y + 19, 15, '#0b1c2c', 'left');
+  } else {
+    text(ctx, title, t.x + 10, t.y + 19, 15, '#0b1c2c', 'left');
+  }
   ctx.restore();
 }
 
