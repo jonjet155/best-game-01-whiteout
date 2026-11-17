@@ -41,6 +41,50 @@ function text(ctx, s, x, y, size, color, align, outline, baseline) {
   ctx.fillText(s, x, y);
 }
 
+function flake(ctx, x, y, r) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(224,242,254,0.95)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.shadowColor = 'rgba(125,211,252,0.8)';
+  ctx.shadowBlur = 6;
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI) / 3;
+    ctx.beginPath();
+    ctx.moveTo(x - Math.cos(a) * r, y - Math.sin(a) * r);
+    ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x, y, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// Chunky 3D wordmark line: dark extrusion stacked below the glyphs, a
+// vertical gradient fill with a cold glow, then a dark outline on top so
+// the letters stay legible over the peak. Deterministic — fixed offsets.
+function logoText(ctx, s, x, y, size, stops, depthColor, outline) {
+  ctx.font = `${size}px ${FONT}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.lineJoin = 'round';
+  ctx.fillStyle = depthColor;
+  for (let d = 2; d <= 10; d += 2) ctx.fillText(s, x, y + d);
+  const g = ctx.createLinearGradient(0, y - size, 0, y);
+  for (const [off, col] of stops) g.addColorStop(off, col);
+  ctx.save();
+  ctx.shadowColor = 'rgba(125,211,252,0.55)';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = g;
+  ctx.fillText(s, x, y);
+  ctx.restore();
+  ctx.lineWidth = Math.max(2, size / 7);
+  ctx.strokeStyle = outline;
+  ctx.strokeText(s, x, y);
+}
+
 function tablet(ctx, t, title, titleColor) {
   ctx.save();
   ctx.fillStyle = 'rgba(7, 18, 30, 0.86)';
@@ -777,9 +821,78 @@ function drawTitle(ctx, world) {
   g.addColorStop(1, 'rgba(7,18,30,0.78)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  text(ctx, 'WHITEOUT', CX, 150, 110, '#f8fafc', 'center', 'rgba(7,18,30,0.9)');
-  text(ctx, 'HOLD THE VILLAGE THROUGH 7 BLIZZARDS', CX, 196, 24, '#fde68a', 'center', 'rgba(7,18,30,0.9)');
-  text(ctx, 'The snow itself is the enemy. Release it before it releases itself.', CX, 226, 16, '#e2e8f0', 'center', 'rgba(7,18,30,0.85)');
+  // Title logo, Volcano Haven style in our snow theme: a snow-mountain
+  // peak + storm swirl behind a chunky stacked two-line wordmark, with a
+  // dot-separated tagline below. Original art, drawn by the game itself.
+  // Snow-mountain peak behind the letters (apex above the wordmark, like
+  // the volcano behind VOLCANO HAVEN).
+  // Two faces: the snow-lit left slope and the shadowed right slope,
+  // so the peak reads as a mountain, not a flat triangle.
+  const faceL = ctx.createLinearGradient(0, 16, 0, 198);
+  faceL.addColorStop(0, '#3a6288');
+  faceL.addColorStop(1, '#1a3a52');
+  ctx.beginPath();
+  ctx.moveTo(CX, 16);
+  ctx.lineTo(392, 198);
+  ctx.lineTo(CX, 198);
+  ctx.closePath();
+  ctx.fillStyle = faceL;
+  ctx.fill();
+  const faceR = ctx.createLinearGradient(0, 16, 0, 198);
+  faceR.addColorStop(0, '#22405c');
+  faceR.addColorStop(1, '#0d1f30');
+  ctx.beginPath();
+  ctx.moveTo(CX, 16);
+  ctx.lineTo(888, 198);
+  ctx.lineTo(CX, 198);
+  ctx.closePath();
+  ctx.fillStyle = faceR;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(CX, 16);
+  ctx.lineTo(392, 198);
+  ctx.lineTo(888, 198);
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(224,242,254,0.35)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Snow cap: bright, jagged, hugging the apex.
+  ctx.beginPath();
+  ctx.moveTo(CX, 16);
+  ctx.lineTo(598, 72);
+  ctx.lineTo(618, 64);
+  ctx.lineTo(590, 98);
+  ctx.lineTo(620, 86);
+  ctx.lineTo(640, 102);
+  ctx.lineTo(660, 86);
+  ctx.lineTo(690, 98);
+  ctx.lineTo(662, 64);
+  ctx.lineTo(682, 72);
+  ctx.closePath();
+  ctx.fillStyle = '#e8f4fd';
+  ctx.fill();
+  // Storm swirl: two thin arcs sweeping over the peak, echoing the
+  // White Giant medallion's rings.
+  ctx.strokeStyle = 'rgba(125,211,252,0.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(CX, 205, 168, -2.8, -0.35); ctx.stroke();
+  ctx.strokeStyle = 'rgba(125,211,252,0.28)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(CX, 205, 186, -2.5, -0.7); ctx.stroke();
+  // Snowflakes flanking the peak, just outside its edges.
+  flake(ctx, 455, 130, 10);
+  flake(ctx, 825, 130, 10);
+  // Stacked wordmark: frosty-white WHITE over deep icy-blue OUT.
+  logoText(ctx, 'WHITE', CX, 116, 88,
+    [[0, '#ffffff'], [0.55, '#dbeafe'], [1, '#bae6fd']],
+    '#1e293b', 'rgba(7,18,30,0.9)');
+  logoText(ctx, 'OUT', CX, 214, 124,
+    [[0, '#7dd3fc'], [0.55, '#38bdf8'], [1, '#1d4ed8']],
+    '#1e3a8a', 'rgba(7,18,30,0.9)');
+  // Dot-separated tagline: the game's three verbs.
+  ctx.letterSpacing = '4px';
+  text(ctx, 'HOLD • RESCUE • SURVIVE', CX, 232, 19, '#fde68a', 'center', 'rgba(7,18,30,0.9)');
+  ctx.letterSpacing = '0px';
 
   // Content-count strip: every number is a real count from config.js
   // (8 slopes, 7 blizzards, 5 threats, 5 build tools, 9 upgrades).
