@@ -23,6 +23,7 @@ export function stageShot(name, world) {
       world.stats.avalanches = 2;
       world.bossDefeated = true;
       world.blizzard = BLIZZARDS;
+      world.bestCombo = 12;
       world.villagers.lost = 3;
       world.result = {
         score: 12480, best: 12480, newBest: true, grade: 'S', blizzard: 7,
@@ -122,7 +123,7 @@ export function stageShot(name, world) {
   world.wolves.push({ x: 1010, y: 480, speed: 30, warn: 0 });
   world.floats.push({ x: 480, y: 220, text: '+68 RELEASE', color: '#fde68a', life: 0.9, maxLife: 1.1 });
   world.floats.push({ x: 900, y: 300, text: '+40', color: '#fef3c7', life: 0.8, maxLife: 1.1 });
-  world.floats.push({ x: 640, y: 180, text: 'COMBO x2.25', color: '#fde68a', life: 1.0, maxLife: 1.1 });
+  world.floats.push({ x: 640, y: 180, text: 'COMBO x1.25', color: '#fde68a', life: 1.0, maxLife: 1.1 });
   world.floats.push({ x: 760, y: 520, text: '+50 RESCUED', color: '#86efac', life: 0.7, maxLife: 1.1 });
   world.banner = 'WHITEOUT — WOLVES IN THE SNOW';
   world.bannerTimer = 2.5;

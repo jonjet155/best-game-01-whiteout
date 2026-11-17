@@ -24,6 +24,7 @@ export function createWorld(seed) {
     best: 0,
     combo: 0,
     comboTimer: 0,
+    bestCombo: 0,
     wood: 30,
     food: 24,
     warmth: 82,
@@ -124,6 +125,7 @@ export function addScore(world, base, x, y, label) {
 
 export function bumpCombo(world) {
   world.combo += 1;
+  world.bestCombo = Math.max(world.bestCombo || 0, world.combo);
   world.comboTimer = 6;
 }
 

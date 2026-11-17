@@ -3,8 +3,8 @@
 // mountain sits in the centre, a storm ring circles it, and four corner
 // tablets hold threats, rescue, build and weather/resources.
 import {
-  BLIZZARDS, BUILD, CX, CY, H, MOUNTAIN_R, RING_R, SLOPE_ANGLES, SLOPE_NAMES, THREATS, W,
-  gradeFor, multFor,
+  BLIZZARDS, BUILD, CX, CY, H, MOUNTAIN_R, RING_R, SLOPE_ANGLES, SLOPE_NAMES, THREATS,
+  VILLAGE_R, W, gradeFor, multFor,
 } from './config.js';
 import {
   SCREEN_DRAFT, SCREEN_LOSE, SCREEN_PAUSE, SCREEN_PLAY, SCREEN_TITLE,
@@ -543,7 +543,8 @@ function drawThreats(ctx, world) {
     y += 30;
   }
   const nextPhase = ['calm', 'snowfall', 'whiteout', 'clear'][(world.phaseIndex + 1) % 4].toUpperCase();
-  text(ctx, `NEXT: ${nextPhase} in ${Math.ceil(world.phaseTimer)}s  ·  WIND ${Math.round(((world.windAngle % 360) + 360) % 360)}°`, TL.x + 10, TL.y + TL.h - 8, 11, '#7dd3fc', 'left');
+  const windDeg = Math.round(((world.windAngle % 360) + 360) % 360);
+  text(ctx, `NEXT: ${nextPhase} ${Math.ceil(world.phaseTimer)}s · WIND ${windDeg}°`, TL.x + 10, TL.y + TL.h - 8, 10, '#7dd3fc', 'left');
 }
 
 function drawRescue(ctx, world) {
@@ -556,18 +557,18 @@ function drawRescue(ctx, world) {
     { name: 'At risk', n: v.atRisk, color: '#fbbf24' },
     { name: 'Lost', n: v.lost, color: '#f87171' },
   ];
-  let y = TR.y + 40;
+  let y = TR.y + 38;
   for (const r of rows) {
     text(ctx, r.name, TR.x + 12, y, 13, '#f8fafc', 'left');
     bar(ctx, TR.x + 110, y - 10, 120, 8, Math.min(1, r.n / 50), r.color);
     text(ctx, `${r.n} / ${v.total}`, TR.x + 238, y, 13, '#fff', 'left');
-    y += 24;
+    y += 23;
   }
-  text(ctx, `HOUSES  ${alive} / 10 standing`, TR.x + 12, y + 2, 12, '#f8fafc', 'left');
+  text(ctx, `HOUSES  ${alive} / 10 standing`, TR.x + 12, y + 1, 12, '#f8fafc', 'left');
   const hpFrac = world.houses.reduce((a, h) => a + Math.max(0, h.hp), 0) / 1000;
-  bar(ctx, TR.x + 12, y + 10, 200, 8, hpFrac, '#f59e0b');
-  text(ctx, `WARMTH  ${Math.round(world.warmth)}°`, TR.x + 12, y + 34, 12, world.warmth < 30 ? '#fca5a5' : '#f8fafc', 'left');
-  bar(ctx, TR.x + 12, y + 42, 200, 8, world.warmth / 100, world.warmth < 30 ? '#ef4444' : '#fbbf24');
+  bar(ctx, TR.x + 12, y + 9, 200, 8, hpFrac, '#f59e0b');
+  text(ctx, `WARMTH  ${Math.round(world.warmth)}°`, TR.x + 12, y + 31, 12, world.warmth < 30 ? '#fca5a5' : '#f8fafc', 'left');
+  bar(ctx, TR.x + 12, y + 39, 200, 8, world.warmth / 100, world.warmth < 30 ? '#ef4444' : '#fbbf24');
   text(ctx, world.buried.length > 0 ? `⚠ ${world.buried.length} BURIED — CLICK TO RESCUE` : 'No one buried. The village breathes.', TR.x + 12, TR.y + TR.h - 8, 11, world.buried.length > 0 ? '#fca5a5' : '#86efac', 'left');
 }
 
@@ -651,8 +652,19 @@ function drawLog(ctx, world) {
   ctx.strokeStyle = 'rgba(125, 211, 252, 0.4)';
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  text(ctx, world.log[0] || '', x + 10, y + 15, 11, '#f8fafc', 'left');
-  if (world.log[1]) text(ctx, world.log[1], x + 10, y + 31, 11, '#94a3b8', 'left');
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  const fit = (s) => {
+    ctx.font = `11px ${FONT}`;
+    let t = s;
+    while (t.length > 0 && ctx.measureText(t).width > w - 20) t = t.slice(0, -1);
+    return t.length < s.length ? t.slice(0, -1) + '…' : t;
+  };
+  text(ctx, fit(world.log[0] || ''), x + 10, y + 15, 11, '#f8fafc', 'left');
+  if (world.log[1]) text(ctx, fit(world.log[1]), x + 10, y + 31, 11, '#94a3b8', 'left');
+  ctx.restore();
   ctx.restore();
 }
 
@@ -698,7 +710,6 @@ function drawWhiteout(ctx, world) {
   g.addColorStop(1, 'rgba(226, 232, 240, 0.42)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  text(ctx, 'WHITEOUT — VISIBILITY DOWN', CX, 130, 15, '#e2e8f0', 'center', 'rgba(7,18,30,0.8)');
 }
 
 // --- full screens -----------------------------------------------------------
@@ -854,7 +865,7 @@ function drawEnd(ctx, world, won) {
     ['AVALANCHES', String(r.avalanches)],
     ['HOUSES LEFT', `${r.houses} / 10`],
     ['VILLAGERS LOST', String(r.lost)],
-    ['COMBO BEST', `x${multFor(Math.max(world.combo, 0)).toFixed(2)}`],
+    ['COMBO BEST', `x${multFor(world.bestCombo || 0).toFixed(2)}`],
   ];
   stats.forEach((s, i) => {
     const col = i % 2;
