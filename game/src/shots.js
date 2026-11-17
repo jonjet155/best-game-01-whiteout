@@ -25,9 +25,13 @@ export function stageShot(name, world) {
       world.blizzard = BLIZZARDS;
       world.bestCombo = 12;
       world.villagers.lost = 3;
+      world.eye.pushes = 3;
+      // Per-blizzard score deltas for the chart — sums to the 12,480 total.
+      world.blizzardScores = [980, 1420, 1650, 1980, 2100, 1750, 2600];
       world.result = {
         score: 12480, best: 12480, newBest: true, grade: 'S', blizzard: 7,
         releases: 41, rescues: 9, wolves: 23, avalanches: 2, houses: 9, lost: 3,
+        blizzardScores: [980, 1420, 1650, 1980, 2100, 1750, 2600],
       };
       world.best = 12480;
       return { screen: SCREEN_WIN, best: 12480 };
@@ -81,10 +85,11 @@ export function stageShot(name, world) {
     world.time = 12.4;
     return { screen: 'draft', best: world.best };
   }
-  // play: dense mid-blizzard-4 whiteout — HUD full, slopes deep, wolves in,
-  // a buried villager, a rescue team digging, floats, banner, log lines.
+  // play: PAYOFF frame on blizzard 7 — a big controlled release just fired
+  // on the SE slope, a rescue chain is digging out two buried villagers,
+  // and the White Giant's storm eye rides the ring (2 of 3 pushes done).
   startGame(world);
-  world.blizzard = 4;
+  world.blizzard = 7;
   world.phaseIndex = 2; // whiteout
   world.phaseTimer = 6.2;
   world.blizzardTimer = 22.5;
@@ -96,6 +101,7 @@ export function stageShot(name, world) {
   world.warmth = 61;
   world.combo = 7;
   world.comboTimer = 4.2;
+  world.eye = { active: true, angle: -45, dist: 280, pushes: 2 };
   world.villagers.evacuated = 11;
   world.villagers.protected = 27;
   world.villagers.atRisk = 9;
@@ -107,7 +113,7 @@ export function stageShot(name, world) {
   world.slopes[4].pack = 18;
   world.slopes[5].pack = 47;
   world.slopes[6].pack = 73;
-  world.slopes[7].pack = 88;
+  world.slopes[7].pack = 94;
   world.slopes[1].fence = true;
   world.slopes[6].fence = true;
   world.slopes[3].flash = 0.5;
@@ -118,17 +124,30 @@ export function stageShot(name, world) {
   world.buried.push({ x: 560, y: 470, timer: 9.4, max: 14 });
   world.buried.push({ x: 760, y: 300, timer: 5.1, max: 14 });
   world.rescues.push({ x: 600, y: 430, tx: 560, ty: 470, target: world.buried[0], digging: true, digTimer: 1.6, speed: 65 });
+  world.rescues.push({ x: 700, y: 340, tx: 760, ty: 300, target: world.buried[1], digging: false, digTimer: 0, digMax: 3, speed: 65 });
   world.wolves.push({ x: 930, y: 250, speed: 30, warn: 0 });
   world.wolves.push({ x: 380, y: 540, speed: 30, warn: 0 });
   world.wolves.push({ x: 1010, y: 480, speed: 30, warn: 0 });
-  world.floats.push({ x: 480, y: 220, text: '+68 RELEASE', color: '#fde68a', life: 0.9, maxLife: 1.1 });
+  world.wolves.push({ x: 340, y: 300, speed: 30, warn: 0 });
+  world.wolves.push({ x: 1050, y: 300, speed: 30, warn: 0 });
+  // Flow rush from the controlled release down the SE (45°) gully.
+  for (let i = 0; i < 18; i++) {
+    const a = (45 + ((i % 5) - 2) * 4) * Math.PI / 180;
+    const r = 130 + i * 6;
+    world.particles.push({
+      x: 640 + Math.cos(a) * r, y: 360 + Math.sin(a) * r,
+      vx: Math.cos(a) * 40, vy: Math.sin(a) * 40,
+      r: 2 + (i % 3), life: 0.9, kind: 'flow',
+    });
+  }
+  world.floats.push({ x: 480, y: 220, text: '+68 RELEASE', color: '#fde68a', life: 0.9, maxLife: 1.1, size: 34 });
   world.floats.push({ x: 900, y: 300, text: '+40', color: '#fef3c7', life: 0.8, maxLife: 1.1 });
-  world.floats.push({ x: 640, y: 180, text: 'COMBO x1.25', color: '#fde68a', life: 1.0, maxLife: 1.1 });
+  world.floats.push({ x: 640, y: 180, text: 'COMBO x1.25', color: '#fde68a', life: 1.0, maxLife: 1.1, size: 24 });
   world.floats.push({ x: 760, y: 520, text: '+50 RESCUED', color: '#86efac', life: 0.7, maxLife: 1.1 });
-  world.banner = 'WHITEOUT — WOLVES IN THE SNOW';
+  world.banner = 'BLIZZARD 7 — THE WHITE GIANT WAKES · PUSH THE EYE BACK';
   world.bannerTimer = 2.5;
   world.log = [
-    'WHITEOUT — visibility drops. Wolves slip out of the trees!',
+    'BLIZZARD 7 — the White Giant wakes. Its eye rides the storm ring!',
     'Controlled release on the SE slope — the gully runs clear.',
     'A wolf yelps and bolts for the treeline.',
     'Snowfall thickens on every slope.',

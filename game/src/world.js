@@ -59,6 +59,12 @@ export function createWorld(seed) {
     bannerTimer: 0,
     shake: 0,
     stats: { releases: 0, rescues: 0, wolvesScared: 0, avalanches: 0, stokes: 0, horns: 0 },
+    // Per-blizzard score deltas, recorded when each blizzard ends (startDraft
+    // / endGame). Powers the results screen's SCORE PER BLIZZARD chart with
+    // real run data only — never invented.
+    blizzardScores: [],
+    scoreAtBlizzardStart: 0,
+    blizzardRecorded: false,
     result: null,
     loseReason: '',
     draftFromBlizzard: 0,
@@ -282,7 +288,15 @@ export function pushEye(world, audio) {
   return true;
 }
 
+export function recordBlizzardScore(world) {
+  if (world.blizzardRecorded) return;
+  world.blizzardScores.push(world.score - (world.scoreAtBlizzardStart || 0));
+  world.scoreAtBlizzardStart = world.score;
+  world.blizzardRecorded = true;
+}
+
 export function startDraft(world) {
+  recordBlizzardScore(world);
   world.draftFromBlizzard = world.blizzard;
   const pool = shuffle(world.rng, UPGRADES.filter((u) => !world.upgrades.includes(u.id)));
   world.draftChoices = pool.slice(0, 3);
@@ -304,6 +318,8 @@ export function pickDraft(world, choice, audio) {
 
 export function startBlizzard(world, n) {
   world.blizzard = n;
+  world.scoreAtBlizzardStart = world.score;
+  world.blizzardRecorded = false;
   world.blizzardTimer = BLIZZARD_TIME;
   world.finalStand = false;
   world.phaseIndex = 0;
@@ -383,6 +399,7 @@ function checkEnd(world, audio) {
 }
 
 export function endGame(world, won, reason, audio) {
+  recordBlizzardScore(world);
   world.screen = won ? SCREEN_WIN : SCREEN_LOSE;
   world.loseReason = won ? '' : reason;
   world.result = {
@@ -397,6 +414,7 @@ export function endGame(world, won, reason, audio) {
     avalanches: world.stats.avalanches,
     houses: housesAlive(world),
     lost: world.villagers.lost,
+    blizzardScores: [...world.blizzardScores],
   };
   world.best = world.result.best;
   if (audio) { if (won) audio.win(); else audio.lose(); }
