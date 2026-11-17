@@ -45,6 +45,7 @@ export function createWorld(seed) {
     rescues: [], // {x, y, tx, ty, target, digging, digTimer}
     eye: { active: false, angle: -90, dist: 280, pushes: 0 },
     bossDefeated: false,
+    eyePushCooldown: 0,
     hornCooldown: 0,
     throwCooldown: 0,
     bellTimer: 0,
@@ -200,7 +201,7 @@ export function rescueBuried(world, buried, audio) {
   if (world.food < 2) { addLog(world, 'Not enough food to send a rescue team (need 2).'); return false; }
   if (world.rescues.some((r) => r.target === buried)) return false;
   world.food -= 2;
-  world.rescues.push({ x: 640, y: 360, tx: buried.x, ty: buried.y, target: buried, digging: false, digTimer: 0, speed: world.upgrades.includes('ropes') ? 130 : 65 });
+  world.rescues.push({ x: 640, y: 360, tx: buried.x, ty: buried.y, target: buried, digging: false, digTimer: 0, digMax: 3 / (world.upgrades.includes('ropes') ? 2 : 1), speed: world.upgrades.includes('ropes') ? 130 : 65 });
   addLog(world, 'A rescue team sets out with ropes and shovels.');
   if (audio) audio.click();
   return true;
@@ -211,7 +212,6 @@ export function stokeHouse(world, house, audio) {
   if (world.wood < 2) { addLog(world, 'Not enough wood to stoke a hearth (need 2).'); return false; }
   world.wood -= 2;
   house.warm = Math.min(100, house.warm + 35);
-  world.warmth = Math.min(100, world.warmth + 4);
   world.stats.stokes += 1;
   addScore(world, 5, house.x, house.y - 14, 'WARM');
   addLog(world, 'You stoke a hearth — lamplight spills onto the snow.');
@@ -234,11 +234,13 @@ export function buildItem(world, def, audio) {
     addLog(world, `Snow fence raised on the ${s.name} slope — it fills half as fast.`);
   } else if (def.id === 'wall') {
     const alive = world.houses.filter((h) => !h.dead).sort((a, b) => a.hp - b.hp)[0];
-    if (!alive) return false;
+    if (!alive) { addLog(world, 'No house stands to shield.'); world.wood += cost.wood; return false; }
+    if (alive.shield) { addLog(world, 'The weakest house already has an ice wall.'); world.wood += cost.wood; return false; }
     alive.shield = true;
     addLog(world, 'An ice wall rises around the weakest house.');
   } else if (def.id === 'tunnel') {
     const n = Math.min(3, world.villagers.atRisk);
+    if (n === 0) { addLog(world, 'No one is at risk — the tunnel waits.'); world.food += cost.food; return false; }
     world.villagers.atRisk -= n;
     world.villagers.evacuated += n;
     addLog(world, `${n} villagers slip through the tunnel to the safe hall.`);
@@ -257,7 +259,10 @@ export function buildItem(world, def, audio) {
 }
 
 export function pushEye(world, audio) {
+  if (world.screen !== SCREEN_PLAY) return false;
   if (!world.eye.active || world.bossDefeated) return false;
+  if (world.eyePushCooldown > 0) return false;
+  world.eyePushCooldown = 1;
   world.eye.dist = Math.min(280, world.eye.dist + 70);
   world.eye.angle += 35;
   world.eye.pushes += 1;
@@ -288,7 +293,7 @@ export function startDraft(world) {
 export function pickDraft(world, choice, audio) {
   if (world.screen !== SCREEN_DRAFT) return false;
   world.upgrades.push(choice.id);
-  if (choice.id === 'hearth') { world.warmth = Math.min(100, world.warmth + 20); world.houses.forEach((h) => { h.warm = Math.min(100, h.warm + 15); }); }
+  if (choice.id === 'hearth') { world.houses.forEach((h) => { h.warm = Math.min(100, h.warm + 15); }); }
   if (choice.id === 'stock') { world.wood += 18; world.food += 12; }
   if (choice.id === 'walls') { world.houses.forEach((h) => { if (!h.dead) h.hp = Math.min(100, h.hp + 30); }); }
   addLog(world, `Drafted ${choice.name} — ${choice.desc}`);
@@ -314,6 +319,7 @@ export function startBlizzard(world, n) {
     world.eye.angle = -90;
     world.eye.dist = 280;
     world.eye.pushes = 0;
+    world.eyePushCooldown = 0;
   }
   addLog(world, `Blizzard ${n} begins. Wood +${8 + n}, food +6 from the storehouse.`);
 }
@@ -326,7 +332,7 @@ function naturalAvalanche(world, slope, audio) {
   const p = slopePoint(world, slope, 200);
   addFloat(world, p.x, p.y - 20, 'AVALANCHE!', '#fca5a5');
   world.shake = 0.6;
-  world.warmth = Math.max(0, world.warmth - 8);
+  for (const h of world.houses) if (!h.dead) h.warm = Math.max(0, h.warm - 8);
   burstFlow(world, slope);
   // Houses near the slope's sector take the hit.
   const hit = world.houses.filter((h) => {
@@ -423,10 +429,13 @@ export function update(world, dt, audio) {
   if (world.shake > 0) world.shake -= dt;
   if (world.hornCooldown > 0) world.hornCooldown -= dt;
   if (world.throwCooldown > 0) world.throwCooldown -= dt;
+  if (world.eyePushCooldown > 0) world.eyePushCooldown -= dt;
   if (world.bellTimer > 0) world.bellTimer -= dt;
-  if (world.comboTimer > 0) { world.comboTimer -= dt; if (world.comboTimer <= 0) world.combo = 0; }
 
   if (world.screen !== SCREEN_PLAY) return;
+
+  // Combo only decays while playing — frozen in draft/pause/title.
+  if (world.comboTimer > 0) { world.comboTimer -= dt; if (world.comboTimer <= 0) world.combo = 0; }
 
   // --- weather phases ---
   world.phaseTimer -= dt;
@@ -543,7 +552,7 @@ export function update(world, dt, audio) {
       if (audio) audio.hurt();
     }
     if (world.bellTimer > 0 && d < 320) { w.done = true; addFloat(world, w.x, w.y, 'BELL!', '#fef3c7'); }
-    if (world.upgrades.includes('choir') && d > 288) { w.done = true; }
+    if (world.upgrades.includes('choir') && d < 288) { w.done = true; }
   }
   world.wolves = world.wolves.filter((w) => !w.done);
 
@@ -555,12 +564,22 @@ export function update(world, dt, audio) {
       world.eye.dist = 260;
       world.shake = 0.8;
       for (const h of world.houses) if (!h.dead) h.hp -= 15;
-      world.warmth = Math.max(0, world.warmth - 10);
+      for (const h of world.houses) if (!h.dead) h.warm = Math.max(0, h.warm - 10);
       addLog(world, 'THE STORM EYE SWEEPS THE VILLAGE — houses reel, fires gutter!');
       addFloat(world, 640, 240, 'STORM EYE!', '#c7d2fe');
       if (audio) audio.avalanche();
     }
   }
+
+  // B1: breaking the Giant during FINAL STAND wins at once — the only
+  // win call used to sit inside `if (!world.finalStand)`, so a late
+  // break could never reach WIN.
+  if (world.finalStand && world.bossDefeated) endGame(world, true, '', audio);
+
+  // S6: end conditions are checked before the blizzard clock, so a loss
+  // on the same frame can never grant a free draft.
+  checkEnd(world, audio);
+  if (world.screen !== SCREEN_PLAY) return;
 
   // --- blizzard clock ---
   if (!world.finalStand) {
@@ -578,6 +597,4 @@ export function update(world, dt, audio) {
       }
     }
   }
-
-  checkEnd(world, audio);
 }

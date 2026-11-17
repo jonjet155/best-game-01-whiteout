@@ -54,7 +54,9 @@ function tablet(ctx, t, title, titleColor) {
   ctx.fill();
   ctx.fillStyle = 'rgba(7, 18, 30, 0.86)';
   ctx.fillRect(t.x, t.y + 16, t.w, 10);
-  text(ctx, title, t.x + 10, t.y + 19, 15, '#0b1c2c', 'left');
+  // Title text sits 1 px lower at 14 px so emoji glyphs (⚠/🔨/🏠/🌦) are
+  // not clipped at the top of the 26 px title bar.
+  text(ctx, title, t.x + 10, t.y + 20, 14, '#0b1c2c', 'left');
   ctx.restore();
 }
 
@@ -339,7 +341,7 @@ function drawMountain(ctx, world) {
       ctx.strokeStyle = '#fde68a';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(r.target.x, r.target.y, 22, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - r.digTimer / 3));
+      ctx.arc(r.target.x, r.target.y, 22, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - r.digTimer / (r.digMax || 3)));
       ctx.stroke();
     }
   }
@@ -396,7 +398,8 @@ function drawMountain(ctx, world) {
 }
 
 function drawStormRing(ctx, world) {
-  // Clock-face gauge: 7 blizzard pips, wind arrow, phase label.
+  // Clock-face gauge: 7 blizzard pips around the ring. (Wind arrow is a
+  // separate pass, drawWindArrow, drawn after the corner tablets.)
   ctx.save();
   ctx.strokeStyle = 'rgba(125, 211, 252, 0.7)';
   ctx.lineWidth = 3;
@@ -424,18 +427,9 @@ function drawStormRing(ctx, world) {
     ctx.stroke();
     text(ctx, String(i + 1), x, y + 4, 11, '#0b1c2c', 'center');
   }
-  // Wind arrow.
-  const wa = (world.windAngle * Math.PI) / 180;
-  const wx = CX + Math.cos(wa) * (RING_R + 26);
-  const wy = CY + Math.sin(wa) * (RING_R + 26);
-  ctx.fillStyle = '#fde68a';
-  ctx.beginPath();
-  ctx.moveTo(wx + Math.cos(wa) * 12, wy + Math.sin(wa) * 12);
-  ctx.lineTo(wx + Math.cos(wa + 2.5) * 10, wy + Math.sin(wa + 2.5) * 10);
-  ctx.lineTo(wx + Math.cos(wa - 2.5) * 10, wy + Math.sin(wa - 2.5) * 10);
-  ctx.closePath();
-  ctx.fill();
-  text(ctx, 'WIND', wx, wy + 26, 10, '#fde68a', 'center', 'rgba(7,18,30,0.85)');
+  // Wind arrow lives in its own pass (drawWindArrow, called after the
+  // corner tablets) — at ~135° it lands inside the BUILD tablet's bounds,
+  // and the opaque tablet used to hide it.
 
   // The White Giant's storm eye rides the ring on blizzard 7.
   if (world.eye.active && !world.bossDefeated) {
@@ -470,6 +464,22 @@ function drawStormRing(ctx, world) {
     ctx.stroke();
     ctx.setLineDash([]);
   }
+  ctx.restore();
+}
+
+function drawWindArrow(ctx, world) {
+  const wa = (world.windAngle * Math.PI) / 180;
+  const wx = CX + Math.cos(wa) * (RING_R + 26);
+  const wy = CY + Math.sin(wa) * (RING_R + 26);
+  ctx.save();
+  ctx.fillStyle = '#fde68a';
+  ctx.beginPath();
+  ctx.moveTo(wx + Math.cos(wa) * 12, wy + Math.sin(wa) * 12);
+  ctx.lineTo(wx + Math.cos(wa + 2.5) * 10, wy + Math.sin(wa + 2.5) * 10);
+  ctx.lineTo(wx + Math.cos(wa - 2.5) * 10, wy + Math.sin(wa - 2.5) * 10);
+  ctx.closePath();
+  ctx.fill();
+  text(ctx, 'WIND', wx, wy + 26, 10, '#fde68a', 'center', 'rgba(7,18,30,0.85)');
   ctx.restore();
 }
 
@@ -531,7 +541,7 @@ function drawThreats(ctx, world) {
     { icon: '❄', name: 'Avalanche', sub: `${danger} slopes deep · ${critical} critical`, frac: danger / 8, color: '#f97316' },
     { icon: '🌨', name: 'Blizzard', sub: `${world.blizzard} of 7 — ${phase.name.toLowerCase()} now`, frac: world.blizzard / 7, color: '#7dd3fc' },
     { icon: '🧊', name: 'Icefall', sub: critical > 0 ? `${critical} slopes about to break` : 'slopes holding, for now', frac: critical / 8, color: '#38bdf8' },
-    { icon: '🌫', name: 'Whiteout', sub: phase.id === 'whiteout' ? 'ACTIVE — visibility down' : `next in ${Math.ceil(world.phaseTimer)}s`, frac: phase.id === 'whiteout' ? 1 : 0.3, color: '#cbd5e1' },
+    { icon: '🌫', name: 'Whiteout', sub: phase.id === 'whiteout' ? 'ACTIVE — visibility down' : `next phase in ${Math.ceil(world.phaseTimer)}s`, frac: phase.id === 'whiteout' ? 1 : 0.3, color: '#cbd5e1' },
     { icon: '🐺', name: 'Wolves', sub: world.wolves.length > 0 ? `${world.wolves.length} on the mountain — click to scare` : 'in the treeline, waiting', frac: world.wolves.length / 5, color: '#a78bfa' },
   ];
   let y = TL.y + 38;
@@ -574,7 +584,7 @@ function drawRescue(ctx, world) {
 
 function drawBuild(ctx, world) {
   const sel = world.slopes[world.selectedSlope];
-  tablet(ctx, BL, `🔨  BUILD  —  SLOPE: ${sel.name}  ·  CLICK A SLOPE TO AIM`, '#fde68a');
+  tablet(ctx, BL, `🔨  BUILD  —  SLOPE ${sel.name}`, '#fde68a');
   let y = BL.y + 40;
   for (const b of BUILD) {
     const afford = (!b.cost.wood || world.wood >= b.cost.wood) && (!b.cost.food || world.food >= b.cost.food);
@@ -983,6 +993,7 @@ export function render(ctx, world) {
     drawRescue(ctx, world);
     drawBuild(ctx, world);
     drawWeather(ctx, world);
+    drawWindArrow(ctx, world);
     drawDraft(ctx, world);
   } else if (world.screen === SCREEN_WIN) {
     drawEnd(ctx, world, true);
@@ -997,6 +1008,7 @@ export function render(ctx, world) {
     drawRescue(ctx, world);
     drawBuild(ctx, world);
     drawWeather(ctx, world);
+    drawWindArrow(ctx, world);
     drawLog(ctx, world);
     drawBanner(ctx, world);
     drawWhiteout(ctx, world);

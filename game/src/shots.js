@@ -88,7 +88,7 @@ export function stageShot(name, world) {
   world.phaseIndex = 2; // whiteout
   world.phaseTimer = 6.2;
   world.blizzardTimer = 22.5;
-  world.windAngle = -135;
+  world.windAngle = 135; // staged at 135° so the wind arrow sits over the BUILD tablet (N6 draw-order check)
   world.score = 6840;
   world.best = 24860;
   world.wood = 34;
