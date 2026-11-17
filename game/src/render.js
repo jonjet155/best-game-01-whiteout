@@ -868,67 +868,9 @@ function drawTitle(ctx, world) {
   g.addColorStop(1, 'rgba(7,18,30,0.78)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  // Title logo, Volcano Haven style in our snow theme: a snow-mountain
-  // peak + storm swirl behind a chunky stacked two-line wordmark, with a
-  // dot-separated tagline below. Original art, drawn by the game itself.
-  // Snow-mountain peak behind the letters (apex above the wordmark, like
-  // the volcano behind VOLCANO HAVEN).
-  // Two faces: the snow-lit left slope and the shadowed right slope,
-  // so the peak reads as a mountain, not a flat triangle.
-  const faceL = ctx.createLinearGradient(0, 16, 0, 198);
-  faceL.addColorStop(0, '#3a6288');
-  faceL.addColorStop(1, '#1a3a52');
-  ctx.beginPath();
-  ctx.moveTo(CX, 16);
-  ctx.lineTo(392, 198);
-  ctx.lineTo(CX, 198);
-  ctx.closePath();
-  ctx.fillStyle = faceL;
-  ctx.fill();
-  const faceR = ctx.createLinearGradient(0, 16, 0, 198);
-  faceR.addColorStop(0, '#22405c');
-  faceR.addColorStop(1, '#0d1f30');
-  ctx.beginPath();
-  ctx.moveTo(CX, 16);
-  ctx.lineTo(888, 198);
-  ctx.lineTo(CX, 198);
-  ctx.closePath();
-  ctx.fillStyle = faceR;
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(CX, 16);
-  ctx.lineTo(392, 198);
-  ctx.lineTo(888, 198);
-  ctx.closePath();
-  ctx.strokeStyle = 'rgba(224,242,254,0.35)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  // Snow cap: bright, jagged, hugging the apex.
-  ctx.beginPath();
-  ctx.moveTo(CX, 16);
-  ctx.lineTo(598, 72);
-  ctx.lineTo(618, 64);
-  ctx.lineTo(590, 98);
-  ctx.lineTo(620, 86);
-  ctx.lineTo(640, 102);
-  ctx.lineTo(660, 86);
-  ctx.lineTo(690, 98);
-  ctx.lineTo(662, 64);
-  ctx.lineTo(682, 72);
-  ctx.closePath();
-  ctx.fillStyle = '#e8f4fd';
-  ctx.fill();
-  // Storm swirl: two thin arcs sweeping over the peak, echoing the
-  // White Giant medallion's rings.
-  ctx.strokeStyle = 'rgba(125,211,252,0.55)';
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(CX, 205, 168, -2.8, -0.35); ctx.stroke();
-  ctx.strokeStyle = 'rgba(125,211,252,0.28)';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.arc(CX, 205, 186, -2.5, -0.7); ctx.stroke();
-  // Snowflakes flanking the peak, just outside its edges.
-  flake(ctx, 455, 130, 10);
-  flake(ctx, 825, 130, 10);
+  // Title logo, text only (John 2026-11-17): the mountain peak, snow
+  // cap, storm swirl and flanking flakes behind the wordmark are gone —
+  // just the stacked wordmark + tagline over the title background.
   // Stacked wordmark, Bungee: frosty-white WHITE over deep icy-blue OUT,
   // both lines the same width with flush left and right edges — one
   // straight, neat block. OUT is stretched with letter-spacing to match
