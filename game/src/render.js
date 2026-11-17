@@ -859,36 +859,44 @@ function drawWhiteout(ctx, world) {
 // --- full screens -----------------------------------------------------------
 
 function drawTitle(ctx, world) {
+  // Flat dark-navy background (John 2026-11-17): the title photo still
+  // showed mountains behind the wordmark and the logo did not blend —
+  // so no title image, no gradient, just #0A1931 like the approved
+  // text-only sample. The wordmark + tagline sit directly on it.
   const a = world.assets;
-  if (a && a.title) ctx.drawImage(a.title, 0, 0, W, H);
-  else { ctx.fillStyle = '#0b1c2c'; ctx.fillRect(0, 0, W, H); }
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, 'rgba(7,18,30,0.25)');
-  g.addColorStop(0.55, 'rgba(7,18,30,0.45)');
-  g.addColorStop(1, 'rgba(7,18,30,0.78)');
-  ctx.fillStyle = g;
+  ctx.fillStyle = '#0A1931';
   ctx.fillRect(0, 0, W, H);
-  // Title logo, text only (John 2026-11-17): the mountain peak, snow
-  // cap, storm swirl and flanking flakes behind the wordmark are gone —
-  // just the stacked wordmark + tagline over the title background.
-  // Stacked wordmark, Bungee: frosty-white WHITE over deep icy-blue OUT,
-  // both lines the same width with flush left and right edges — one
-  // straight, neat block. OUT is stretched with letter-spacing to match
-  // WHITE's width exactly.
-  const logo = fitStackedLogo(ctx);
-  const lx = CX - logo.widthW / 2;
-  logoPart(ctx, 'WHITE', lx, logo.baseW, logo.sizeW,
-    [[0, '#ffffff'], [0.55, '#dbeafe'], [1, '#bae6fd']],
-    '#1e293b', 'rgba(7,18,30,0.9)', LOGO_FONT);
-  ctx.letterSpacing = `${logo.lsO}px`;
-  logoPart(ctx, 'OUT', lx, logo.baseO, logo.sizeO,
-    [[0, '#7dd3fc'], [0.55, '#38bdf8'], [1, '#1d4ed8']],
-    '#1e3a8a', 'rgba(7,18,30,0.9)', LOGO_FONT);
-  ctx.letterSpacing = '0px';
-  // Dot-separated tagline: the game's three verbs.
-  ctx.letterSpacing = '4px';
-  text(ctx, 'HOLD • RESCUE • SURVIVE', CX, 232, 19, '#fde68a', 'center', 'rgba(7,18,30,0.9)');
-  ctx.letterSpacing = '0px';
+  // Title logo: the approved stacked-Bungee sample image (John
+  // 2026-11-17), cropped tight to the wordmark + tagline. Its
+  // background is the same flat #0A1931 as this screen, so it blends
+  // with no seam. Falls back to the code-drawn wordmark if the image
+  // did not load.
+  if (a && a.logo) {
+    // 330 wide -> ~238 tall, tagline lands ~228, clear of the
+    // content strip at y=240.
+    const lw = 330;
+    const lh = lw * (a.logo.height / a.logo.width);
+    ctx.drawImage(a.logo, CX - lw / 2, 2, lw, lh);
+  } else {
+    // Stacked wordmark, Bungee: frosty-white WHITE over deep icy-blue OUT,
+    // both lines the same width with flush left and right edges — one
+    // straight, neat block. OUT is stretched with letter-spacing to match
+    // WHITE's width exactly.
+    const logo = fitStackedLogo(ctx);
+    const lx = CX - logo.widthW / 2;
+    logoPart(ctx, 'WHITE', lx, logo.baseW, logo.sizeW,
+      [[0, '#ffffff'], [0.55, '#dbeafe'], [1, '#bae6fd']],
+      '#1e293b', 'rgba(7,18,30,0.9)', LOGO_FONT);
+    ctx.letterSpacing = `${logo.lsO}px`;
+    logoPart(ctx, 'OUT', lx, logo.baseO, logo.sizeO,
+      [[0, '#7dd3fc'], [0.55, '#38bdf8'], [1, '#1d4ed8']],
+      '#1e3a8a', 'rgba(7,18,30,0.9)', LOGO_FONT);
+    ctx.letterSpacing = '0px';
+    // Dot-separated tagline: the game's three verbs.
+    ctx.letterSpacing = '4px';
+    text(ctx, 'HOLD • RESCUE • SURVIVE', CX, 232, 19, '#fde68a', 'center', 'rgba(7,18,30,0.9)');
+    ctx.letterSpacing = '0px';
+  }
 
   // Content-count strip: every number is a real count from config.js
   // (8 slopes, 7 blizzards, 5 threats, 5 build tools, 9 upgrades).

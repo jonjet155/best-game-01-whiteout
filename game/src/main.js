@@ -33,6 +33,7 @@ const ASSETS = {
   title: 'assets/media-generation-bg-title-0-94028377-78b2-40f9-83ab-ac6344b9c8b1.jpg',
   giant: 'assets/media-generation-giant-0-50ee0913-52e6-45d8-898b-8ad96da51765.jpg',
   wolves: 'assets/media-generation-wolves-0-282187e4-a255-41ee-85f9-daedc9aad7c7.jpg',
+  logo: 'assets/logo-title.png',
 };
 
 function loadImage(src) {
@@ -163,10 +164,11 @@ Promise.all([
   loadImage(ASSETS.title),
   loadImage(ASSETS.giant),
   loadImage(ASSETS.wolves),
+  loadImage(ASSETS.logo),
   document.fonts ? document.fonts.load('16px "Lilita One"').catch(() => {}) : Promise.resolve(),
   document.fonts ? document.fonts.load('16px "Bungee"').catch(() => {}) : Promise.resolve(),
-]).then(([play, title, giant, wolves]) => {
-  world.assets = { play, title, giant, wolves };
+]).then(([play, title, giant, wolves, logo]) => {
+  world.assets = { play, title, giant, wolves, logo };
   if (shot) stageShot(shot, world);
   requestAnimationFrame(frame);
 });
