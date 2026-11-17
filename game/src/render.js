@@ -1,5 +1,5 @@
 // WHITEOUT — all drawing. Canvas 2D, 1280x720, Lilita One display font,
-// Bungee for the one-line title logo.
+// Bungee for the stacked title logo.
 // Layout is deliberately NOT the top-entries' top-bar + side panels: the
 // mountain sits in the centre, a storm ring circles it, and four corner
 // tablets hold threats, rescue, build and weather/resources.
@@ -95,20 +95,41 @@ function logoText(ctx, s, x, y, size, stops, depthColor, outline) {
   logoPart(ctx, s, x - w / 2, y, size, stops, depthColor, outline, FONT);
 }
 
-// One-line Bungee wordmark, fitted to the title width (clear of the giant
-// medallion on the right). Size is fitted once and cached; the fit uses
-// the loaded Bungee metrics, so it matches what is drawn.
-let logoOneLineSize = 0;
-function fitOneLineLogo(ctx) {
-  if (logoOneLineSize) return logoOneLineSize;
-  let size = 132;
-  ctx.font = `${size}px ${LOGO_FONT}`;
-  while (size > 40 && ctx.measureText('WHITEOUT').width > 760) {
-    size -= 2;
-    ctx.font = `${size}px ${LOGO_FONT}`;
+// Stacked Bungee wordmark, both lines the SAME width with flush left and
+// right edges — one straight, neat block. WHITE is fitted to the title
+// width; OUT is sized to fit the same vertical budget and stretched with
+// letter-spacing to exactly WHITE's width. The two sizes sum to at most
+// 250 so the block (caps + gap + extrusion) ends above the tagline at
+// 232. Fitted once and cached; the fit uses the loaded Bungee metrics,
+// so it matches what is drawn.
+const STACKED_TARGET = 360;
+const STACKED_TOP = 20;
+const STACKED_GAP = 2;
+let logoStacked = null;
+function fitStackedLogo(ctx) {
+  if (logoStacked) return logoStacked;
+  ctx.letterSpacing = '0px';
+  let sizeW = 200;
+  ctx.font = `${sizeW}px ${LOGO_FONT}`;
+  while (sizeW > 40 && ctx.measureText('WHITE').width > STACKED_TARGET) {
+    sizeW -= 2;
+    ctx.font = `${sizeW}px ${LOGO_FONT}`;
   }
-  logoOneLineSize = size;
-  return size;
+  const widthW = ctx.measureText('WHITE').width;
+  const capW = ctx.measureText('WHITE').actualBoundingBoxAscent || sizeW * 0.72;
+  let sizeO = Math.min(240, 250 - sizeW);
+  ctx.font = `${sizeO}px ${LOGO_FONT}`;
+  while (sizeO > 40 && ctx.measureText('OUT').width > widthW) {
+    sizeO -= 2;
+    ctx.font = `${sizeO}px ${LOGO_FONT}`;
+  }
+  const widthO = ctx.measureText('OUT').width;
+  const capO = ctx.measureText('OUT').actualBoundingBoxAscent || sizeO * 0.72;
+  const lsO = Math.max(0, (widthW - widthO) / 3);
+  const baseW = STACKED_TOP + Math.ceil(capW);
+  const baseO = baseW + STACKED_GAP + Math.ceil(capO);
+  logoStacked = { sizeW, sizeO, widthW, lsO, baseW, baseO };
+  return logoStacked;
 }
 
 function tablet(ctx, t, title, titleColor) {
@@ -848,7 +869,7 @@ function drawTitle(ctx, world) {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
   // Title logo, Volcano Haven style in our snow theme: a snow-mountain
-  // peak + storm swirl behind a chunky one-line wordmark, with a
+  // peak + storm swirl behind a chunky stacked two-line wordmark, with a
   // dot-separated tagline below. Original art, drawn by the game itself.
   // Snow-mountain peak behind the letters (apex above the wordmark, like
   // the volcano behind VOLCANO HAVEN).
@@ -905,23 +926,23 @@ function drawTitle(ctx, world) {
   ctx.strokeStyle = 'rgba(125,211,252,0.28)';
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(CX, 205, 186, -2.5, -0.7); ctx.stroke();
-  // Snowflakes flanking the peak apex, high on either side — clear of
-  // the one-line wordmark below.
-  flake(ctx, 455, 60, 10);
-  flake(ctx, 825, 60, 10);
-  // One-line wordmark, Bungee: "WHITE" frosty-white + "OUT" icy-blue,
-  // straight across (not stacked), fitted to the title width.
-  const lsize = fitOneLineLogo(ctx);
-  ctx.font = `${lsize}px ${LOGO_FONT}`;
-  const wWhite = ctx.measureText('WHITE').width;
-  const wOut = ctx.measureText('OUT').width;
-  const lx = CX - (wWhite + wOut) / 2;
-  logoPart(ctx, 'WHITE', lx, 200, lsize,
+  // Snowflakes flanking the peak, just outside its edges.
+  flake(ctx, 455, 130, 10);
+  flake(ctx, 825, 130, 10);
+  // Stacked wordmark, Bungee: frosty-white WHITE over deep icy-blue OUT,
+  // both lines the same width with flush left and right edges — one
+  // straight, neat block. OUT is stretched with letter-spacing to match
+  // WHITE's width exactly.
+  const logo = fitStackedLogo(ctx);
+  const lx = CX - logo.widthW / 2;
+  logoPart(ctx, 'WHITE', lx, logo.baseW, logo.sizeW,
     [[0, '#ffffff'], [0.55, '#dbeafe'], [1, '#bae6fd']],
     '#1e293b', 'rgba(7,18,30,0.9)', LOGO_FONT);
-  logoPart(ctx, 'OUT', lx + wWhite, 200, lsize,
+  ctx.letterSpacing = `${logo.lsO}px`;
+  logoPart(ctx, 'OUT', lx, logo.baseO, logo.sizeO,
     [[0, '#7dd3fc'], [0.55, '#38bdf8'], [1, '#1d4ed8']],
     '#1e3a8a', 'rgba(7,18,30,0.9)', LOGO_FONT);
+  ctx.letterSpacing = '0px';
   // Dot-separated tagline: the game's three verbs.
   ctx.letterSpacing = '4px';
   text(ctx, 'HOLD • RESCUE • SURVIVE', CX, 232, 19, '#fde68a', 'center', 'rgba(7,18,30,0.9)');
