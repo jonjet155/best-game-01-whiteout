@@ -142,8 +142,8 @@ export function stageShot(name, world) {
   }
   world.floats.push({ x: 480, y: 220, text: '+68 RELEASE', color: '#fde68a', life: 0.9, maxLife: 1.1, size: 34 });
   world.floats.push({ x: 900, y: 300, text: '+40', color: '#fef3c7', life: 0.8, maxLife: 1.1 });
-  world.floats.push({ x: 640, y: 180, text: 'COMBO x1.25', color: '#fde68a', life: 1.0, maxLife: 1.1, size: 24 });
-  world.floats.push({ x: 760, y: 520, text: '+50 RESCUED', color: '#86efac', life: 0.7, maxLife: 1.1 });
+  world.floats.push({ x: 480, y: 290, text: 'COMBO x1.25', color: '#fde68a', life: 1.0, maxLife: 1.1, size: 24 });
+  world.floats.push({ x: 780, y: 565, text: '+50 RESCUED', color: '#86efac', life: 0.7, maxLife: 1.1 });
   world.banner = 'BLIZZARD 7 — THE WHITE GIANT WAKES · PUSH THE EYE BACK';
   world.bannerTimer = 2.5;
   world.log = [
