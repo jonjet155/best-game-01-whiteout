@@ -967,47 +967,9 @@ function drawTitle(ctx, world) {
   ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 3; ctx.stroke();
   text(ctx, '▶  PLAY', CX, 586, 28, '#0b1c2c', 'center');
   text(ctx, 'CLICK PLAY OR PRESS ENTER  ·  SEED 20261117  ·  SOUND ON [M]', CX, 636, 12, '#cbd5e1', 'center');
-  // The White Giant, ~2x the old medallion, with a storm-eye swirl.
-  if (a && a.giant) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(1150, 118, 96, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(a.giant, 1054, -26, 192, 288);
-    ctx.restore();
-    ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(1150, 118, 96, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(199, 210, 254, 0.6)';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(1150, 118, 106, -0.6, 1.4); ctx.stroke();
-    ctx.strokeStyle = 'rgba(129, 140, 248, 0.45)';
-    ctx.beginPath(); ctx.arc(1150, 118, 114, 2.2, 4.0); ctx.stroke();
-    text(ctx, 'BLIZZARD 7 · THE WHITE GIANT', 1150, 238, 13, '#c7d2fe', 'center', 'rgba(7,18,30,0.85)');
-  }
-  // Live-preview thumbnail: the circular mountain, drawn small.
-  ctx.fillStyle = 'rgba(7, 18, 30, 0.8)';
-  rr(ctx, 24, 536, 170, 124, 10); ctx.fill();
-  ctx.strokeStyle = 'rgba(125,211,252,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
-  const mx = 109;
-  const my = 592;
-  for (let i = 0; i < 8; i++) {
-    const a0 = ((-90 + i * 45 - 22.5) * Math.PI) / 180;
-    const a1 = ((-90 + i * 45 + 22.5) * Math.PI) / 180;
-    ctx.beginPath();
-    ctx.moveTo(mx, my);
-    ctx.arc(mx, my, 42, a0, a1);
-    ctx.closePath();
-    ctx.fillStyle = i === 3 ? 'rgba(239,68,68,0.8)' : i === 7 ? 'rgba(249,115,22,0.8)' : 'rgba(191,219,254,0.75)';
-    ctx.fill();
-  }
-  ctx.strokeStyle = 'rgba(253, 230, 138, 0.9)';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(mx, my, 48, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#f59e0b';
-  ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#f8fafc';
-  ctx.beginPath(); ctx.arc(mx - 8, my + 4, 2, 0, Math.PI * 2); ctx.arc(mx + 9, my - 3, 2, 0, Math.PI * 2); ctx.fill();
-  text(ctx, 'THE MOUNTAIN IS THE ENEMY', 109, 652, 10, '#fde68a', 'center');
+  // (John 2026-11-17: no mountain anywhere on the title screen — the
+  // White Giant medallion photo and the circular-mountain thumbnail are
+  // both gone. The mountain itself still lives in the play screen.)
 }
 
 // One icon + one header-band color per upgrade family (ids from config.js).
