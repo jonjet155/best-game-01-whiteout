@@ -1,4 +1,5 @@
-// WHITEOUT — all drawing. Canvas 2D, 1280x720, Lilita One display font.
+// WHITEOUT — all drawing. Canvas 2D, 1280x720, Lilita One display font,
+// Bungee for the one-line title logo.
 // Layout is deliberately NOT the top-entries' top-bar + side panels: the
 // mountain sits in the centre, a storm ring circles it, and four corner
 // tablets hold threats, rescue, build and weather/resources.
@@ -12,6 +13,7 @@ import {
 } from './world.js';
 
 const FONT = '"Lilita One", "Arial Black", sans-serif';
+const LOGO_FONT = '"Bungee", "Lilita One", "Arial Black", sans-serif';
 const TL = { x: 12, y: 12, w: 296, h: 200 };
 const TR = { x: 972, y: 12, w: 296, h: 200 };
 const BL = { x: 12, y: 508, w: 430, h: 200 };
@@ -62,12 +64,13 @@ function flake(ctx, x, y, r) {
   ctx.restore();
 }
 
-// Chunky 3D wordmark line: dark extrusion stacked below the glyphs, a
+// Chunky 3D wordmark part: dark extrusion stacked below the glyphs, a
 // vertical gradient fill with a cold glow, then a dark outline on top so
-// the letters stay legible over the peak. Deterministic — fixed offsets.
-function logoText(ctx, s, x, y, size, stops, depthColor, outline) {
-  ctx.font = `${size}px ${FONT}`;
-  ctx.textAlign = 'center';
+// the letters stay legible over the peak. Drawn left-aligned at x with the
+// given font; returns the part width. Deterministic — fixed offsets.
+function logoPart(ctx, s, x, y, size, stops, depthColor, outline, font) {
+  ctx.font = `${size}px ${font}`;
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.lineJoin = 'round';
   ctx.fillStyle = depthColor;
@@ -83,6 +86,29 @@ function logoText(ctx, s, x, y, size, stops, depthColor, outline) {
   ctx.lineWidth = Math.max(2, size / 7);
   ctx.strokeStyle = outline;
   ctx.strokeText(s, x, y);
+  return ctx.measureText(s).width;
+}
+
+function logoText(ctx, s, x, y, size, stops, depthColor, outline) {
+  ctx.font = `${size}px ${FONT}`;
+  const w = ctx.measureText(s).width;
+  logoPart(ctx, s, x - w / 2, y, size, stops, depthColor, outline, FONT);
+}
+
+// One-line Bungee wordmark, fitted to the title width (clear of the giant
+// medallion on the right). Size is fitted once and cached; the fit uses
+// the loaded Bungee metrics, so it matches what is drawn.
+let logoOneLineSize = 0;
+function fitOneLineLogo(ctx) {
+  if (logoOneLineSize) return logoOneLineSize;
+  let size = 132;
+  ctx.font = `${size}px ${LOGO_FONT}`;
+  while (size > 40 && ctx.measureText('WHITEOUT').width > 760) {
+    size -= 2;
+    ctx.font = `${size}px ${LOGO_FONT}`;
+  }
+  logoOneLineSize = size;
+  return size;
 }
 
 function tablet(ctx, t, title, titleColor) {
@@ -822,7 +848,7 @@ function drawTitle(ctx, world) {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
   // Title logo, Volcano Haven style in our snow theme: a snow-mountain
-  // peak + storm swirl behind a chunky stacked two-line wordmark, with a
+  // peak + storm swirl behind a chunky one-line wordmark, with a
   // dot-separated tagline below. Original art, drawn by the game itself.
   // Snow-mountain peak behind the letters (apex above the wordmark, like
   // the volcano behind VOLCANO HAVEN).
@@ -879,16 +905,23 @@ function drawTitle(ctx, world) {
   ctx.strokeStyle = 'rgba(125,211,252,0.28)';
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(CX, 205, 186, -2.5, -0.7); ctx.stroke();
-  // Snowflakes flanking the peak, just outside its edges.
-  flake(ctx, 455, 130, 10);
-  flake(ctx, 825, 130, 10);
-  // Stacked wordmark: frosty-white WHITE over deep icy-blue OUT.
-  logoText(ctx, 'WHITE', CX, 116, 88,
+  // Snowflakes flanking the peak apex, high on either side — clear of
+  // the one-line wordmark below.
+  flake(ctx, 455, 60, 10);
+  flake(ctx, 825, 60, 10);
+  // One-line wordmark, Bungee: "WHITE" frosty-white + "OUT" icy-blue,
+  // straight across (not stacked), fitted to the title width.
+  const lsize = fitOneLineLogo(ctx);
+  ctx.font = `${lsize}px ${LOGO_FONT}`;
+  const wWhite = ctx.measureText('WHITE').width;
+  const wOut = ctx.measureText('OUT').width;
+  const lx = CX - (wWhite + wOut) / 2;
+  logoPart(ctx, 'WHITE', lx, 200, lsize,
     [[0, '#ffffff'], [0.55, '#dbeafe'], [1, '#bae6fd']],
-    '#1e293b', 'rgba(7,18,30,0.9)');
-  logoText(ctx, 'OUT', CX, 214, 124,
+    '#1e293b', 'rgba(7,18,30,0.9)', LOGO_FONT);
+  logoPart(ctx, 'OUT', lx + wWhite, 200, lsize,
     [[0, '#7dd3fc'], [0.55, '#38bdf8'], [1, '#1d4ed8']],
-    '#1e3a8a', 'rgba(7,18,30,0.9)');
+    '#1e3a8a', 'rgba(7,18,30,0.9)', LOGO_FONT);
   // Dot-separated tagline: the game's three verbs.
   ctx.letterSpacing = '4px';
   text(ctx, 'HOLD • RESCUE • SURVIVE', CX, 232, 19, '#fde68a', 'center', 'rgba(7,18,30,0.9)');

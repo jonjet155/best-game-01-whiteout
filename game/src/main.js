@@ -164,6 +164,7 @@ Promise.all([
   loadImage(ASSETS.giant),
   loadImage(ASSETS.wolves),
   document.fonts ? document.fonts.load('16px "Lilita One"').catch(() => {}) : Promise.resolve(),
+  document.fonts ? document.fonts.load('16px "Bungee"').catch(() => {}) : Promise.resolve(),
 ]).then(([play, title, giant, wolves]) => {
   world.assets = { play, title, giant, wolves };
   if (shot) stageShot(shot, world);
