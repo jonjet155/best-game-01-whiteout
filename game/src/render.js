@@ -1099,9 +1099,10 @@ export function hitTest(world, x, y) {
   for (const h of world.houses) {
     if (!h.dead && Math.hypot(x - h.x, y - h.y) < 18) return { kind: 'house', house: h };
   }
-  // Build rows.
-  if (x >= BL.x && x <= BL.x + BL.w && y >= BL.y + 27 && y <= BL.y + 27 + 5 * 29) {
-    const i = Math.floor((y - (BL.y + 27)) / 29);
+  // Build rows (drawn from BL.y+46, 26 px tall, 29 px pitch — keep in sync
+  // with drawBuild).
+  if (x >= BL.x && x <= BL.x + BL.w && y >= BL.y + 33 && y <= BL.y + 33 + 5 * 29) {
+    const i = Math.floor((y - (BL.y + 33)) / 29);
     if (i >= 0 && i < BUILD.length) return { kind: 'build', index: i };
   }
   // Sound toggle (bottom-right of the weather tablet).
